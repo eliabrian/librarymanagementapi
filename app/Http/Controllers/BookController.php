@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class BookController extends Controller
 {
-    function index(Request $request): AnonymousResourceCollection
+    function index(): AnonymousResourceCollection
     {
         return BookResource::collection(Book::paginate(10));
     }
@@ -23,17 +23,19 @@ class BookController extends Controller
         try {
             $book = BookHandler::storeBook($request);
 
-            return response()->json([
+            $data = [
                 'message' => 'Success!',
                 'book_uuid' => $book->uuid,
-            ], 200);
+            ];
+
+            return response()->json(data: $data, status: 200);
         } catch (\Exception $e) {
             $context = [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTrace(),
             ];
 
-            Log::error('Failed to create a Book', $context);
+            Log::error('Failed to create a Book.', $context);
 
             return response()->json($context, 500);
         }
@@ -44,15 +46,9 @@ class BookController extends Controller
         return new BookResource($book);
     }
 
-    function search(Request $request)
+    function search(Request $request): JsonResponse
     {
-        $books = Book::search(trim($request->get('search')) ?? '')
-            ->query(function ($query) {
-                $query->join('details', 'books.id', 'details.detailable_id')
-                    ->select(['books.uuid', 'details.title', 'details.publisher', 'details.author'])
-                    ->orderBy('books.id', 'DESC');
-            })
-            ->paginate(10);
+        $books = BookHandler::searchBook($request->get('query'));
 
         return response()->json(data: $books, status: 200);
     }

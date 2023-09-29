@@ -4,6 +4,7 @@ namespace App\Http\Handlers;
 
 use App\Http\Requests\BookRequest;
 use App\Models\Book;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class BookHandler
 {
@@ -12,9 +13,9 @@ class BookHandler
      * 
      * @param BookRequest $request Validated data.
      * 
-     * @return object New Book model.
+     * @return Book
      */
-    static function storeBook(BookRequest $request): object
+    static function storeBook(BookRequest $request): Book
     {
         $book = Book::create([
             'uuid' => $request->uuid,
@@ -32,5 +33,18 @@ class BookHandler
         ]);
 
         return $book;
+    }
+
+    /**
+     * Handling book searching.
+     * 
+     * @param string $search
+     * 
+     * @return LengthAwarePaginator
+     */
+    static function searchBook(string $search): LengthAwarePaginator
+    {
+        return Book::search(trim($search))
+            ->paginate(10);
     }
 }
